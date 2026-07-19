@@ -1,0 +1,17 @@
+{
+  "version": "2.1.214",
+  "session_id": "session-synthetic",
+  "prompt_id": "prompt-synthetic",
+  "model": {"id": "claude-opus-4-6", "display_name": "Opus"},
+  "workspace": {
+    "repo": {"host": "synthetic-host", "owner": "synthetic-owner", "name": "synthetic-repo"}
+  },
+  "pr": {"number": 7, "url": "synthetic-pr-url", "review_state": "review-required"},
+  "context_window": {"context_window_size": 200000, "used_percentage": 25.0},
+  "rate_limits": {
+    "five_hour": {"used_percentage": 30, "resets_at": "2026-01-01T05:00:00Z"}
+  },
+  "permission_mode": "default",
+  "agent": {"name": "main"},
+  "cost": {"total_cost_usd": 1.23}
+}

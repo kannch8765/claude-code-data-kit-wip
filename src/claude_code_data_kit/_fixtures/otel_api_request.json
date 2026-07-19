@@ -1,0 +1,22 @@
+{
+  "event": {
+    "name": "claude_code.api_request",
+    "timestamp": "2026-01-01T00:00:00Z",
+    "sequence": 7
+  },
+  "resource": {"attributes": {"service.version": "2.1.214"}},
+  "session": {"id": "session-synthetic"},
+  "prompt": {"id": "prompt-synthetic"},
+  "request_id": "request-synthetic",
+  "model": "claude-opus-4-6",
+  "query_source": "user",
+  "agent": {"name": "main"},
+  "attributes": {
+    "message.id": "message-synthetic",
+    "input_tokens": 100,
+    "output_tokens": 25,
+    "cache_read_tokens": 1000,
+    "cache_creation_tokens": 50,
+    "cost_usd": 0.42
+  }
+}

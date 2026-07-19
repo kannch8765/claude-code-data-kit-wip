@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-code-data-kit"
+version = "0.1.0"
+description = "Privacy-first canonical records and collectors for Claude Code metadata"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = []
+dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.scripts]
+claude-code-data-kit-lab = "claude_code_data_kit._lab_cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+claude_code_data_kit = ["_fixtures/*.json", "_fixtures/*.jsonl"]

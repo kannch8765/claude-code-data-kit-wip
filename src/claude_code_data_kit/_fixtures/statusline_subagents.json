@@ -1,0 +1,16 @@
+{
+  "version": "2.1.214",
+  "session_id": "session-synthetic",
+  "prompt_id": "prompt-synthetic",
+  "columns": 100,
+  "tasks": [
+    {
+      "id": "agent-synthetic",
+      "name": "worker",
+      "status": "running",
+      "model": "claude-sonnet-4-5",
+      "contextWindowSize": 200000,
+      "tokenCount": 20000
+    }
+  ]
+}
