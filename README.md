@@ -43,6 +43,10 @@ Agent `PostToolUse.tool_response.resolvedModel` is retained only as a version-se
 
 The official public upstream is the sole formal source of the core. Changes move through a public development fork and Draft PR, then through an approved release before any downstream PWA consumer updates an exact dependency pin. Private experimentation and downstream consumers do not retain parallel copies of the core.
 
+## License
+
+Claude Code Data Kit is licensed under the MIT License. See `LICENSE`.
+
 ## Release status
 
-Version `0.1.0` is an unreleased package bootstrap. Publication and release creation are blocked pending an explicit maintainer license decision. No license metadata is set.
+Version `0.1.0` remains unreleased. MIT licensing has been selected and recorded, but no tag, GitHub Release, or package publication has been created.

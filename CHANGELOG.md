@@ -9,4 +9,4 @@
 - Explicitly define the stable top-level API, including `CanonicalRecord`, `stable_id`, `dedupe_usage`, `DarioSeizer`, and `RoutingAccumulator`.
 - Restore the complete lab CLI command surface while keeping network operations opt-in.
 - Audit the public tree, wheel, sdist, and single-commit feature history for privacy and package-boundary regressions.
-- Block release pending a maintainer-selected license.
+- Adopt the MIT License and add SPDX-compatible package metadata while keeping `0.1.0` unreleased.
