@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - support/apply-local-store-transcript-ingest-01
+    paths-ignore:
+      - work/apply-local-store-transcript-ingest-01/result.txt
 
 permissions:
   contents: write
@@ -12,32 +14,35 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout payload source
+      - name: Checkout self-reporting apply branch
         uses: actions/checkout@v4
         with:
-          ref: support/apply-local-store-transcript-ingest-01
-          path: payload-source
-          persist-credentials: false
-
-      - name: Checkout exact-base candidate
-        uses: actions/checkout@v4
-        with:
-          ref: candidate/local-store-transcript-ingest-01
           fetch-depth: 0
-          path: candidate
           token: ${{ github.token }}
 
-      - name: Verify, unpack, and test payload
+      - name: Apply payload and record exact result
         shell: bash
         run: |
-          set -euo pipefail
-          expected_base='f916f13244f037607ff40f0c14a020f06164f37b'
-          expected_payload='6880b71545f4c728bdd6f904b9132b83b840d9933bb2e984e29b490e008a7edf'
-          actual_base="$(git -C candidate rev-parse HEAD)"
-          [[ "${actual_base}" == "${expected_base}" ]]
+          set -u
+          result='work/apply-local-store-transcript-ingest-01/result.txt'
+          log='/tmp/apply.log'
+          status=0
+          mkdir -p "$(dirname "${result}")"
 
-          cat payload-source/work/apply-local-store-transcript-ingest-01/chunk-*.b64 > /tmp/ccdk-payload.b64
-          python - <<'PY'
+          {
+            set -euo pipefail
+            expected_base='f916f13244f037607ff40f0c14a020f06164f37b'
+            expected_payload='6880b71545f4c728bdd6f904b9132b83b840d9933bb2e984e29b490e008a7edf'
+
+            git fetch --no-tags origin \
+              refs/heads/candidate/local-store-transcript-ingest-01
+            actual_base="$(git rev-parse FETCH_HEAD)"
+            echo "candidate_before=${actual_base}"
+            [[ "${actual_base}" == "${expected_base}" ]]
+            git worktree add --detach ../candidate "${actual_base}"
+
+            cat work/apply-local-store-transcript-ingest-01/chunk-*.b64 > /tmp/ccdk-payload.b64
+            python - <<'PY'
           from pathlib import Path
 
           path = Path('/tmp/ccdk-payload.b64')
@@ -47,19 +52,19 @@ jobs:
           assert len(text) == 20300, len(text)
           path.write_text(text, encoding='ascii')
           PY
-          base64 --decode /tmp/ccdk-payload.b64 > /tmp/ccdk-payload.tar.gz
-          echo "${expected_payload}  /tmp/ccdk-payload.tar.gz" | sha256sum --check --strict
-          tar -xzf /tmp/ccdk-payload.tar.gz -C candidate
+            base64 --decode /tmp/ccdk-payload.b64 > /tmp/ccdk-payload.tar.gz
+            echo "${expected_payload}  /tmp/ccdk-payload.tar.gz" | sha256sum --check --strict
+            tar -xzf /tmp/ccdk-payload.tar.gz -C ../candidate
 
-          cd candidate
-          git diff --check
-          python -m compileall -q src tests
-          PYTHONPATH=src python -m unittest tests.test_transcript_ingest -v
+            cd ../candidate
+            git diff --check
+            python -m compileall -q src tests
+            PYTHONPATH=src python -m unittest tests.test_transcript_ingest -v
 
-          python - <<'PY'
+            python - <<'PY'
           import subprocess
 
-          expected = [
+          expected = sorted([
               '.github/workflows/ci.yml',
               'README.md',
               'pyproject.toml',
@@ -67,44 +72,41 @@ jobs:
               'src/claude_code_data_kit/store.py',
               'src/claude_code_data_kit/transcript_ingest.py',
               'tests/test_transcript_ingest.py',
-          ]
-          actual = subprocess.check_output(
+          ])
+          actual = sorted(subprocess.check_output(
               ['git', 'diff', '--name-only'], text=True
-          ).splitlines()
+          ).splitlines())
           assert actual == expected, (actual, expected)
           PY
 
-      - name: Create the single candidate commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd candidate
+            git config user.name 'Sou'
+            git config user.email '105340539+kannch8765@users.noreply.github.com'
+            git add -- \
+              .github/workflows/ci.yml \
+              README.md \
+              pyproject.toml \
+              src/claude_code_data_kit/cli.py \
+              src/claude_code_data_kit/store.py \
+              src/claude_code_data_kit/transcript_ingest.py \
+              tests/test_transcript_ingest.py
+            git diff --cached --check
+            [[ "$(git diff --cached --name-only | wc -l)" -eq 7 ]]
+            git commit -m 'feat: add incremental transcript local store'
+            candidate_after="$(git rev-parse HEAD)"
+            git push origin HEAD:refs/heads/candidate/local-store-transcript-ingest-01
+            echo "candidate_after=${candidate_after}"
+          } >"${log}" 2>&1 || status=$?
+
+          {
+            echo "status=${status}"
+            echo "run_commit=${GITHUB_SHA}"
+            echo '--- log ---'
+            cat "${log}"
+          } >"${result}"
+
           git config user.name 'Sou'
           git config user.email '105340539+kannch8765@users.noreply.github.com'
-          git add -- \
-            .github/workflows/ci.yml \
-            README.md \
-            pyproject.toml \
-            src/claude_code_data_kit/cli.py \
-            src/claude_code_data_kit/store.py \
-            src/claude_code_data_kit/transcript_ingest.py \
-            tests/test_transcript_ingest.py
-          git diff --cached --check
-          [[ "$(git diff --cached --name-only | wc -l)" -eq 7 ]]
-          git commit -m 'feat: add incremental transcript local store'
-          git push origin HEAD:refs/heads/candidate/local-store-transcript-ingest-01
-
-      - name: Delete one-shot apply branch
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error \
-            --request DELETE \
-            --header "Authorization: Bearer ${GH_TOKEN}" \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'X-GitHub-Api-Version: 2022-11-28' \
-            "https://api.github.com/repos/${REPOSITORY}/git/refs/heads/support/apply-local-store-transcript-ingest-01"
+          git add -- "${result}"
+          git commit -m 'chore: record candidate apply result'
+          git push origin HEAD:refs/heads/support/apply-local-store-transcript-ingest-01
+          exit "${status}"
