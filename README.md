@@ -11,9 +11,23 @@ python -m pip install dist/claude_code_data_kit-0.1.0-py3-none-any.whl
 python -c "import claude_code_data_kit; print(claude_code_data_kit.SCHEMA_VERSION)"
 ```
 
-Supported public modules are `claude_code_data_kit`, `.collectors`, `.records`, `.dedupe`, `.routing`, `.versioning`, and `.lab`. Public names are explicitly allowlisted with `__all__`.
+Supported public modules are `claude_code_data_kit`, `.collectors`, `.records`, `.dedupe`, `.routing`, `.versioning`, `.store`, `.transcript_ingest`, and `.lab`. Public names are explicitly allowlisted with `__all__`.
 
 The stable top-level convenience API includes canonical record types, `CanonicalRecord`, `stable_id`, `record_to_dict`, `dedupe_usage`, `DarioSeizer`, and `RoutingAccumulator`. Collector adapters and lab helpers remain namespaced and are not silently promoted into the top-level surface.
+
+## Incremental transcript ingestion
+
+Install the package, then ingest one transcript JSONL file or a directory such as the default Claude Code project root:
+
+```bash
+claude-code-data-kit ingest-transcripts ~/.claude/projects --json
+```
+
+The command recursively reads `*.jsonl` files, sends each complete line through the existing transcript adapter, and appends privacy-preserving canonical records to `records.jsonl`. Raw prompt text, assistant text, thinking text, and tool payloads are not stored. A partial final line remains uncommitted until it is completed.
+
+The store follows `XDG_DATA_HOME` and otherwise uses `~/.local/share/claude-code-data-kit/`. Override it with `--data-dir` or `CLAUDE_CODE_DATA_KIT_DATA_DIR`. The CLI normally obtains the local Claude Code version from `claude --version`; isolated runs can pass `--source-version 2.1.220` or set `CLAUDE_CODE_DATA_KIT_SOURCE_VERSION`.
+
+`state.json` tracks device/inode source identity, generation, committed byte offset, line count, and compact boundary fingerprints. Records are fsynced before the state cursor is atomically replaced, and record IDs suppress duplicates when a completed append is replayed after a state-write failure. Run one ingest process per data directory; concurrent writers are not coordinated in v0.1.0.
 
 ## Isolated lab CLI
 

@@ -18,6 +18,7 @@ classifiers = [
 ]
 
 [project.scripts]
+claude-code-data-kit = "claude_code_data_kit.cli:main"
 claude-code-data-kit-lab = "claude_code_data_kit._lab_cli:main"
 
 [tool.setuptools]
